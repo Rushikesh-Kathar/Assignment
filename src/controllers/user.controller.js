@@ -3,10 +3,15 @@ import { getAllUsers } from '../services/userService.js';
 
 export const registerUserController = async (req, res) => {
     try {
-        const { name, email, age, password, mobile } = req.body;
+        const { name, email, age, password, mobile, teamId, roleId } = req.body;
 
 
-        const tokens = await registerUser({ name, email, age, password, mobile });
+        if (!name || !email || !password || !teamId || !roleId) {
+            return res.status(400).json({ message: "Missing required fields" });
+        }
+
+
+        const tokens = await registerUser({ name, email, age, password, mobile, teamId, roleId });
 
         res.status(201).json({
             message: 'User registered successfully',
@@ -19,8 +24,11 @@ export const registerUserController = async (req, res) => {
         if (error.message === 'Missing required fields' || error.message === 'Email already registered') {
             return res.status(400).json({ message: error.message });
         }
-
-        res.status(500).json({ error: 'An internal server error occurred' });
+        return res.status(500).json({
+            message: error.message,
+            sqlMessage: error.sqlMessage,
+            code: error.code
+        });
     }
 };
 
@@ -39,7 +47,6 @@ export const loginUserController = async (req, res) => {
     }
 };
 
-
 export const userGetter = async (req, res) => {
     try {
         const users = await getAllUsers();
@@ -49,8 +56,6 @@ export const userGetter = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
-
-
 
 export const refreshTokenController = async (req, res) => {
     try {
@@ -65,15 +70,20 @@ export const refreshTokenController = async (req, res) => {
 
 };
 
-
 export const revokeUserController = async (req, res) => {
     try {
-        let { token } = req.body;
-        let refreshToken = await revokeUser({ token });
-        res.json({ refreshToken });
+        const { userId } = req.body;
+
+        if (!userId) {
+            return res.status(400).json({ message: "userId is required" });
+        }
+
+        await revokeUser({ userId });
+
+        res.json({ message: "User revoked and tokens deleted successfully" });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: error.message });
     }
+};
 
-}
