@@ -87,3 +87,29 @@ export const revokeUserController = async (req, res) => {
     }
 };
 
+export const adminController = async (req, res) => {
+    try {
+        res.json({ message: "Welcome to the admin route!" });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ error: error.message })
+    }
+}
+
+export const managerController = async (req, res) => {
+    try {
+        res.json({ message: "Welcome to the manager route!" });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ error: error.message })
+    }
+}
+
+export const userController = async (req, res) => {
+    try {
+        res.json({ message: "Welcome to the user route!" });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ error: error.message })
+    }
+}

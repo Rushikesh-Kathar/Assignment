@@ -37,8 +37,8 @@ export const registerUser = async (userData) => {
 
 
         await connection.execute(
-            'INSERT INTO users (id, name, email, age, password, mobile) VALUES (?,?,?,?,?,?)',
-            [userId, name, email, age, hashedPassword, mobile]
+            'INSERT INTO users (id, name, email, age, password, mobile, roleId) VALUES (?,?,?,?,?,?,?)',
+            [userId, name, email, age, hashedPassword, mobile, roleId]
         );
 
 
@@ -53,7 +53,18 @@ export const registerUser = async (userData) => {
             [userId, roleId]
         );
 
-        const tokenUser = { id: userId, email };
+        const [roleResult] = await connection.execute(
+            'SELECT roleName FROM roles WHERE roleID = ?',
+            [roleId]
+        );
+
+        const roleName = roleResult[0].roleName;
+
+        const tokenUser = {
+            id: userId,
+            email,
+            role: roleName
+        };
         const accessToken = generateAccessToken(tokenUser);
         const refreshToken = generateRefreshToken(tokenUser);
 
@@ -61,8 +72,9 @@ export const registerUser = async (userData) => {
         console.log("Inserting refresh token for user:", userId, "Token:", refreshToken);
         try {
             const result = await connection.execute(
-                "INSERT INTO refresh_tokens (user_id, token) VALUES (?, ?)",
-                [userId, refreshToken]
+                `INSERT INTO auth_tokens (id, user_id, access_token, refresh_token)
+   VALUES (?, ?, ?, ?)`,
+                [ulid(), userId, accessToken, refreshToken]
             );
             console.log("Refresh token insert result:", result);
             console.log("Full result object:", JSON.stringify(result, null, 2));
@@ -96,7 +108,6 @@ export const registerUser = async (userData) => {
         connection.release();
     }
 };
-
 
 export const loginUser = async (userData) => {
     const { email, password } = userData;
@@ -183,8 +194,6 @@ export const refreshToken = async (userData) => {
         });
     });
 };
-
-
 
 export const revokeUser = async ({ userId }) => {
     console.log("Revoking userId:", userId);
